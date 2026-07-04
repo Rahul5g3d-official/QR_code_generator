@@ -8,3 +8,12 @@ npm-debug.log*
 .git
 .agents
 .codex
+node_modules/
+dist/
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+npm-debug.log*
+.DS_Store
+HUGGINGFACE_DEPLOYMENT.md
