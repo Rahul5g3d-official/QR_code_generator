@@ -16,7 +16,7 @@ ENV NODE_ENV=production \
     HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
-RUN useradd -m -u 1000 user
+RUN groupmod -n user node && usermod -l user -d /home/user -m node
 
 WORKDIR /home/user/app
 
