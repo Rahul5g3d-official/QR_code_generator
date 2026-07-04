@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -14,6 +17,9 @@ import qrRoutes from "./routes/qrRoutes.js";
 import redirectRoutes from "./routes/redirectRoutes.js";
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distDir = path.resolve(__dirname, "../../dist");
+const indexFile = path.join(distDir, "index.html");
 
 if (env.isProduction) {
   app.set("trust proxy", 1);
@@ -55,6 +61,19 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get("/runtime-config.js", (_req, res) => {
+  res
+    .type("application/javascript")
+    .setHeader("Cache-Control", "no-store, max-age=0");
+  res.send(
+    `window.__QR_TRACK_CONFIG__ = ${JSON.stringify({
+      apiBaseUrl: "",
+      supabaseUrl: env.supabaseUrl,
+      supabaseAnonKey: env.supabaseAnonKey,
+    })};`,
+  );
+});
+
 app.get("/health", (_req, res) => {
   res.json({ success: true, ok: true });
 });
@@ -74,6 +93,28 @@ app.get("/health/db", asyncHandler(async (_req, res) => {
 app.use(redirectRoutes);
 app.use("/api", globalApiRateLimiter);
 app.use("/api/qr", qrRoutes);
+
+if (fs.existsSync(indexFile)) {
+  app.use(
+    express.static(distDir, {
+      index: false,
+      maxAge: env.isProduction ? "1h" : 0,
+    }),
+  );
+
+  app.get("*", (req, res, next) => {
+    if (
+      req.path.startsWith("/api") ||
+      req.path.startsWith("/q") ||
+      req.path.startsWith("/health")
+    ) {
+      next();
+      return;
+    }
+
+    res.sendFile(indexFile);
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

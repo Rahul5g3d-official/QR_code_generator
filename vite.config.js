@@ -5,5 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    proxy: {
+      "/runtime-config.js": "http://localhost:4000",
+    },
   },
 });

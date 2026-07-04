@@ -1,3 +1,10 @@
+---
+title: QR Track
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # QR Track
 
 Production-ready dynamic QR tracking app built with React, Vite, Tailwind CSS, React Router, Express, Supabase Auth, and Supabase PostgreSQL.
@@ -24,6 +31,8 @@ QR images encode a backend tracking URL such as `/q/abc123`, not the final desti
 
 The frontend runs on `http://localhost:5173` and the backend runs on `http://localhost:4000`.
 
+For Hugging Face Docker Spaces deployment, follow [HUGGINGFACE_DEPLOYMENT.md](HUGGINGFACE_DEPLOYMENT.md).
+
 ## Environment
 
 Backend-only secrets:
@@ -44,7 +53,7 @@ Production backend values:
 
 ```bash
 NODE_ENV=production
-PORT=4000
+PORT=7860
 FRONTEND_URL=https://yourfrontend.com
 ALLOWED_ORIGINS=https://yourfrontend.com
 PUBLIC_BASE_URL=https://yourapi.com
@@ -101,3 +110,20 @@ npm run build
 npm run lint
 npm audit
 ```
+
+## Container
+
+Build and run locally:
+
+```bash
+docker build -t qr-track .
+docker run --env-file .env \
+  -e PORT=7860 \
+  -e FRONTEND_URL=http://localhost:7860 \
+  -e ALLOWED_ORIGINS=http://localhost:7860 \
+  -e PUBLIC_BASE_URL=http://localhost:7860 \
+  -p 7860:7860 \
+  qr-track
+```
+
+Open `http://localhost:7860`.
