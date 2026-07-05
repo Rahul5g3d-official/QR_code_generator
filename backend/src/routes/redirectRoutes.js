@@ -89,6 +89,41 @@ function renderTrackingUnavailable(res) {
 </html>`);
 }
 
+async function redirectWithoutAnalytics(req, res, shortCode) {
+  const { data: qrCode, error } = await supabaseAdmin
+    .from("qr_codes")
+    .select("original_url")
+    .eq("short_code", shortCode)
+    .eq("is_active", true)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return renderNotFound(res);
+    }
+
+    req.log?.error(
+      {
+        err: error,
+        shortCode,
+      },
+      "failed to load QR code for degraded redirect",
+    );
+    return renderTrackingUnavailable(res);
+  }
+
+  if (!qrCode?.original_url) {
+    return renderNotFound(res);
+  }
+
+  req.log?.warn(
+    { shortCode },
+    "redirecting QR scan without analytics because scan recording failed",
+  );
+
+  return res.redirect(302, qrCode.original_url);
+}
+
 router.get(
   "/q/:shortCode",
   qrScanShortCodeRateLimiter,
@@ -127,7 +162,7 @@ router.get(
         },
         "failed to record QR scan",
       );
-      return renderTrackingUnavailable(res);
+      return redirectWithoutAnalytics(req, res, parsed.data.shortCode);
     }
 
     const result = Array.isArray(data) ? data[0] : data;
