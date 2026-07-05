@@ -7,6 +7,17 @@
       name="description"
       content="Create dynamic QR codes with privacy-aware scan analytics."
     />
+    <meta
+  http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self';
+    connect-src 'self' https://oarxasxuejppevzbglzm.supabase.co wss://oarxasxuejppevzbglzm.supabase.co;
+    img-src 'self' data: blob: https://oarxasxuejppevzbglzm.supabase.co;
+    style-src 'self' 'unsafe-inline';
+    font-src 'self' data:;
+    object-src 'none';
+  "
+/>
     <title>QR Track</title>
   </head>
   <body>

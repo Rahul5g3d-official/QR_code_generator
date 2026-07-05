@@ -30,25 +30,27 @@ app.use(requestId);
 app.use(httpLogger);
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    hsts: env.isProduction
-      ? {
-          maxAge: 15552000,
-          includeSubDomains: true,
-          preload: false,
-        }
-      : false,
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        baseUri: ["'self'"],
-        objectSrc: ["'none'"],
+
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://oarxasxuejppevzbglzm.supabase.co"],
+        fontSrc: ["'self'", "data:"],
+
+        connectSrc: [
+          "'self'",
+          "https://oarxasxuejppevzbglzm.supabase.co",
+          "wss://oarxasxuejppevzbglzm.supabase.co"
+        ],
+
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'", "https://huggingface.co"],
       },
     },
-  }),
+  })
 );
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
