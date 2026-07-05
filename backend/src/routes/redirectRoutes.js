@@ -66,6 +66,29 @@ function renderNotFound(res) {
 </html>`);
 }
 
+function renderTrackingUnavailable(res) {
+  return res.status(503).send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tracking unavailable</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+    main { max-width: 32rem; padding: 2rem; text-align: center; }
+    a { color: #2563eb; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tracking is temporarily unavailable</h1>
+    <p>This QR link exists, but the tracking service is not ready. Please try again later.</p>
+    <a href="${env.frontendUrl}/privacy">Privacy notice</a>
+  </main>
+</body>
+</html>`);
+}
+
 router.get(
   "/q/:shortCode",
   qrScanShortCodeRateLimiter,
@@ -97,8 +120,14 @@ router.get(
     });
 
     if (error) {
-      req.log?.error({ err: error }, "failed to record QR scan");
-      return renderNotFound(res);
+      req.log?.error(
+        {
+          err: error,
+          shortCode: parsed.data.shortCode,
+        },
+        "failed to record QR scan",
+      );
+      return renderTrackingUnavailable(res);
     }
 
     const result = Array.isArray(data) ? data[0] : data;

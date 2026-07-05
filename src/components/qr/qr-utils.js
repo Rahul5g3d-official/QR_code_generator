@@ -2,7 +2,10 @@ import { config } from "../../lib/config";
 
 export function getTrackingUrl(qrCode) {
   if (!qrCode?.short_code) return "";
-  return `${config.apiBaseUrl.replace(/\/$/, "")}/q/${qrCode.short_code}`;
+  const baseUrl =
+    config.apiBaseUrl ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  return `${baseUrl.replace(/\/$/, "")}/q/${qrCode.short_code}`;
 }
 
 export function getQrFilename(qrCode) {
