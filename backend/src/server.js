@@ -119,11 +119,14 @@ if (fs.existsSync(indexFile)) {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(env.port, () => {
+app.listen(env.port, "0.0.0.0", () => {
   logger.info(
     {
       port: env.port,
+      host: "0.0.0.0",
       nodeEnv: env.nodeEnv,
+      isHuggingFaceSpace: env.isHuggingFaceSpace,
+      frontendUrl: env.frontendUrl,
       publicBaseUrl: env.publicBaseUrl,
     },
     "QR Track API listening",

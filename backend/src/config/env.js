@@ -5,24 +5,82 @@ function firstDefined(...values) {
   return values.find((value) => value !== undefined && value !== "");
 }
 
+const isHuggingFaceSpace = Boolean(
+  process.env.SPACE_ID ||
+    process.env.SPACE_HOST ||
+    process.env.SPACE_URL ||
+    process.env.HF_SPACE_ID,
+);
+
+function normalizeOrigin(value) {
+  if (!value) return undefined;
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  return withProtocol.replace(/\/$/, "");
+}
+
+function deriveHuggingFaceSpaceUrl() {
+  const explicit = normalizeOrigin(
+    firstDefined(process.env.SPACE_URL, process.env.SPACE_HOST),
+  );
+  if (explicit) return explicit;
+
+  const spaceId = firstDefined(process.env.SPACE_ID, process.env.HF_SPACE_ID);
+  if (!spaceId || !spaceId.includes("/")) return undefined;
+
+  const [owner, name] = spaceId.split("/");
+  const slug = `${owner}-${name}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return `https://${slug}.hf.space`;
+}
+
+function isLocalUrl(value) {
+  return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(value || "");
+}
+
+const derivedSpaceUrl = deriveHuggingFaceSpaceUrl();
+const defaultLocalFrontendUrl = "http://localhost:5173";
+const defaultLocalPublicBaseUrl = "http://localhost:4000";
+const frontendUrlOverride =
+  isHuggingFaceSpace && isLocalUrl(process.env.FRONTEND_URL)
+    ? undefined
+    : process.env.FRONTEND_URL;
+const allowedOriginsOverride =
+  isHuggingFaceSpace && isLocalUrl(process.env.ALLOWED_ORIGINS)
+    ? undefined
+    : process.env.ALLOWED_ORIGINS;
+const publicBaseUrlOverride =
+  isHuggingFaceSpace && isLocalUrl(process.env.PUBLIC_BASE_URL)
+    ? undefined
+    : process.env.PUBLIC_BASE_URL;
+
 const rawEnv = {
   NODE_ENV: process.env.NODE_ENV || "development",
-  PORT: process.env.PORT || "4000",
+  PORT: isHuggingFaceSpace ? "7860" : process.env.PORT || "4000",
   FRONTEND_URL: firstDefined(
-    process.env.FRONTEND_URL,
-    process.env.CLIENT_URL,
-    "http://localhost:5173",
+    frontendUrlOverride,
+    isHuggingFaceSpace ? derivedSpaceUrl : process.env.CLIENT_URL,
+    !isHuggingFaceSpace ? process.env.CLIENT_URL : undefined,
+    derivedSpaceUrl,
+    defaultLocalFrontendUrl,
   ),
   ALLOWED_ORIGINS: firstDefined(
-    process.env.ALLOWED_ORIGINS,
-    process.env.FRONTEND_URL,
-    process.env.CLIENT_URL,
-    "http://localhost:5173",
+    allowedOriginsOverride,
+    frontendUrlOverride,
+    isHuggingFaceSpace ? derivedSpaceUrl : process.env.CLIENT_URL,
+    !isHuggingFaceSpace ? process.env.CLIENT_URL : undefined,
+    derivedSpaceUrl,
+    defaultLocalFrontendUrl,
   ),
   PUBLIC_BASE_URL: firstDefined(
-    process.env.PUBLIC_BASE_URL,
-    process.env.APP_BASE_URL,
-    "http://localhost:4000",
+    publicBaseUrlOverride,
+    isHuggingFaceSpace ? derivedSpaceUrl : process.env.APP_BASE_URL,
+    !isHuggingFaceSpace ? process.env.APP_BASE_URL : undefined,
+    derivedSpaceUrl,
+    defaultLocalPublicBaseUrl,
   ),
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: firstDefined(
@@ -63,6 +121,23 @@ if (!parsed.success) {
 }
 
 const values = parsed.data;
+const productionUrls = [
+  ["FRONTEND_URL", values.FRONTEND_URL],
+  ["PUBLIC_BASE_URL", values.PUBLIC_BASE_URL],
+];
+
+if (
+  values.NODE_ENV === "production" &&
+  productionUrls.some(([, value]) => /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(value))
+) {
+  const invalid = productionUrls
+    .filter(([, value]) => /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(value))
+    .map(([name]) => name)
+    .join(", ");
+  throw new Error(
+    `Invalid production environment: ${invalid} cannot point to localhost. Set them to your public Hugging Face Space URL.`,
+  );
+}
 
 export const env = {
   nodeEnv: values.NODE_ENV,
@@ -79,4 +154,5 @@ export const env = {
   scanRetentionDays: values.SCAN_RETENTION_DAYS,
   maxQrCodesPerUser: values.MAX_QR_CODES_PER_USER,
   maxQrCreatePerHour: values.MAX_QR_CREATE_PER_HOUR,
+  isHuggingFaceSpace,
 };

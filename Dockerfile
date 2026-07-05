@@ -12,7 +12,6 @@ RUN npm prune --omit=dev
 FROM node:22-bookworm-slim AS runtime
 
 ENV NODE_ENV=production \
-    PORT=7860 \
     HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
@@ -31,4 +30,4 @@ USER user
 
 EXPOSE 7860
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:space"]

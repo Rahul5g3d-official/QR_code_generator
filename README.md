@@ -53,7 +53,6 @@ Production backend values:
 
 ```bash
 NODE_ENV=production
-PORT=7860
 FRONTEND_URL=https://yourfrontend.com
 ALLOWED_ORIGINS=https://yourfrontend.com
 PUBLIC_BASE_URL=https://yourapi.com

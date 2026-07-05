@@ -11,6 +11,7 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "start": "node backend/src/server.js",
+    "start:space": "PORT=7860 node backend/src/server.js",
     "lint": "eslint .",
     "audit": "npm audit"
   },
